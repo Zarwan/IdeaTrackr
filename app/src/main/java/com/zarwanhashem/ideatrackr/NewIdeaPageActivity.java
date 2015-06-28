@@ -18,6 +18,7 @@ public class NewIdeaPageActivity extends AppCompatActivity {
     private Context myContext;
     private SharedPreferences sharedPref;
     private boolean newIdea = true;
+    private int id = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +35,7 @@ public class NewIdeaPageActivity extends AppCompatActivity {
             setTitle(intent.getStringExtra("title"));
             ideaTitle.setText(intent.getStringExtra("title"));
             ideaDetails.setText(intent.getStringExtra("details"));
+            id = intent.getIntExtra("ID", -1);
             newIdea = false;
 
         } else {
@@ -80,6 +82,7 @@ public class NewIdeaPageActivity extends AppCompatActivity {
         intent.putExtra(IDEA_TITLE_KEY, ideaTitle.getText().toString());
         intent.putExtra(IDEA_DETAILS_KEY, ideaDetails.getText().toString());
         intent.putExtra(NEW_IDEA_KEY, String.valueOf(newIdea));
+        intent.putExtra("ID", id);
         startActivity(intent);
     }
 }
