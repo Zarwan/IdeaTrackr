@@ -1,0 +1,7 @@
+<Button xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/idea_button"
+    android:padding="10dp"
+    android:textSize="16sp"
+    android:text="Testing" />

@@ -14,23 +14,33 @@ import android.widget.EditText;
 public class NewIdeaPageActivity extends AppCompatActivity {
     private static final String IDEA_TITLE_KEY = "title";
     private static final String IDEA_DETAILS_KEY = "details";
+    private static final String NEW_IDEA_KEY = "newIdea";
     private Context myContext;
-    private static SharedPreferences sharedPref;
+    private SharedPreferences sharedPref;
+    private boolean newIdea = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_idea_page);
         myContext = getApplicationContext();
-        setTitle("Create a New Idea");
 
+        Intent intent = getIntent();
+        EditText ideaTitle = (EditText)findViewById(R.id.ideaTitle);
+        EditText ideaDetails = (EditText)findViewById(R.id.ideaDetails);
         sharedPref = myContext.getSharedPreferences("sharedPref", 0);
 
-        EditText ideaTitle = (EditText)findViewById(R.id.ideaTitle);
-        ideaTitle.setText(sharedPref.getString(IDEA_TITLE_KEY, "Title"));
+        if (intent != null && intent.hasExtra("title")) {
+            setTitle(intent.getStringExtra("title"));
+            ideaTitle.setText(intent.getStringExtra("title"));
+            ideaDetails.setText(intent.getStringExtra("details"));
+            newIdea = false;
 
-        EditText ideaDetails = (EditText)findViewById(R.id.ideaDetails);
-        ideaDetails.setText(sharedPref.getString(IDEA_DETAILS_KEY, "Details"));
+        } else {
+            setTitle("Create a New Idea");
+            ideaTitle.setText("Title");
+            ideaDetails.setText("Details");
+        }
     }
 
 
@@ -63,11 +73,13 @@ public class NewIdeaPageActivity extends AppCompatActivity {
 
         editor.putString(IDEA_TITLE_KEY, ideaTitle.getText().toString());
         editor.putString(IDEA_DETAILS_KEY, ideaDetails.getText().toString());
+        editor.putString(NEW_IDEA_KEY, String.valueOf(newIdea));
         editor.commit();
 
         Intent intent = new Intent(v.getContext(), MainActivity.class);
-        intent.putExtra(IDEA_TITLE_KEY, sharedPref.getString(IDEA_TITLE_KEY, "null"));
-        intent.putExtra(IDEA_DETAILS_KEY, sharedPref.getString(IDEA_DETAILS_KEY, "null"));
+        intent.putExtra(IDEA_TITLE_KEY, ideaTitle.getText().toString());
+        intent.putExtra(IDEA_DETAILS_KEY, ideaDetails.getText().toString());
+        intent.putExtra(NEW_IDEA_KEY, String.valueOf(newIdea));
         startActivity(intent);
     }
 }
