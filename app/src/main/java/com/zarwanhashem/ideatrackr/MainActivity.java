@@ -12,14 +12,12 @@ import android.widget.Button;
 import android.widget.ListView;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity {
     private static List<Button> ideas = new ArrayList<Button>();
-    private static Map<Integer, List<String>> ideaData = new HashMap<Integer, List<String>>();
+    private static List<List<String>> ideaData = new ArrayList<List<String>>();
     private static SharedPreferences sharedPref;
     private Context myContext;
     private ListView ideasListView;
@@ -34,20 +32,16 @@ public class MainActivity extends AppCompatActivity {
         ideasListView = (ListView) findViewById(R.id.ideasListView);
 
         Intent intent = getIntent();
-        if (intent != null && intent.hasExtra("title") && intent.hasExtra("newIdea")) {
+        if (intent != null) {
 
-            Button button = new Button(myContext);
-            List<String> data = new ArrayList<String>();
-            data.add(intent.getStringExtra("title"));
-            data.add(intent.getStringExtra("details"));
+            if (intent.getBooleanExtra("Edit", false)) {
 
-            if (intent.getStringExtra("newIdea").equals("true")) {
-                button.setId(ideas.size() + 1);
-                ideaData.put(ideas.size() + 1, data);
-                ideas.add(new Button(myContext));
             } else {
-                int id = intent.getIntExtra("ID", -1);
-                ideaData.put(id, data);
+                List<String> data = new ArrayList<String>();
+                data.add(intent.getStringExtra("title"));
+                data.add(intent.getStringExtra("details"));
+                ideaData.add(data);
+                ideas.add(new Button(myContext));
             }
         }
 

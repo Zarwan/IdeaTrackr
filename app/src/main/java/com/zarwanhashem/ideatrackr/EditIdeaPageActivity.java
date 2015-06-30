@@ -1,42 +1,49 @@
 package com.zarwanhashem.ideatrackr;
 
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 
-public class NewIdeaPageActivity extends AppCompatActivity {
+public class EditIdeaPageActivity extends AppCompatActivity {
     private static final String IDEA_TITLE_KEY = "title";
     private static final String IDEA_DETAILS_KEY = "details";
+
     private Context myContext;
-    private SharedPreferences sharedPref;
+    private static SharedPreferences sharedPref;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_new_idea_page);
+        setContentView(R.layout.activity_edit_idea_page);
         myContext = getApplicationContext();
 
+        Intent intent = getIntent();
         EditText ideaTitle = (EditText)findViewById(R.id.ideaTitle);
         EditText ideaDetails = (EditText)findViewById(R.id.ideaDetails);
         sharedPref = myContext.getSharedPreferences("sharedPref", 0);
 
-        setTitle("Create a New Idea");
-        ideaTitle.setText("Title");
-        ideaDetails.setText("Details");
+        if (intent != null) {
+            setTitle(intent.getStringExtra("title"));
+            ideaTitle.setText(intent.getStringExtra(IDEA_TITLE_KEY));
+            ideaDetails.setText(intent.getStringExtra(IDEA_DETAILS_KEY));
+        } else {
+            setTitle("Error - no idea provided to edit");
+            ideaTitle.setText("Error");
+            ideaDetails.setText("Error");
+        }
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_new_idea_page, menu);
+        getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
@@ -55,7 +62,8 @@ public class NewIdeaPageActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void onSaveIdeaButtonClick(View v) {
+
+    public void onSaveIdeaButtonClicked(View v) {
         SharedPreferences.Editor editor = sharedPref.edit();
         EditText ideaTitle = (EditText)findViewById(R.id.ideaTitle);
         EditText ideaDetails = (EditText)findViewById(R.id.ideaDetails);
@@ -67,7 +75,7 @@ public class NewIdeaPageActivity extends AppCompatActivity {
         Intent intent = new Intent(v.getContext(), MainActivity.class);
         intent.putExtra(IDEA_TITLE_KEY, ideaTitle.getText().toString());
         intent.putExtra(IDEA_DETAILS_KEY, ideaDetails.getText().toString());
-        intent.putExtra("Edit", false);
+        intent.putExtra("Edit", true);
         startActivity(intent);
     }
 }
