@@ -8,7 +8,10 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 
 import java.util.List;
-import java.util.Map;
+
+import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_DETAILS_KEY;
+import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_ID_KEY;
+import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_TITLE_KEY;
 
 public class IdeaAdapter extends ArrayAdapter<Button> {
     private static List<List<String>> ideaData;
@@ -28,9 +31,9 @@ public class IdeaAdapter extends ArrayAdapter<Button> {
 
             public void onClick(View v) {
                 Intent intent = new Intent(v.getContext(), EditIdeaPageActivity.class);
-                intent.putExtra("title", ideaData.get(POSITION).get(0));
-                intent.putExtra("details", ideaData.get(POSITION).get(1));
-                intent.putExtra("ID", POSITION);
+                intent.putExtra(IDEA_TITLE_KEY, ideaData.get(POSITION).get(0));
+                intent.putExtra(IDEA_DETAILS_KEY, ideaData.get(POSITION).get(1));
+                intent.putExtra(IDEA_ID_KEY, POSITION);
                 PARENT.getContext().startActivity(intent);
             }
         });

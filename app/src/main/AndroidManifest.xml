@@ -20,6 +20,10 @@
             android:name=".NewIdeaPageActivity"
             android:label="@string/title_activity_new_idea_page" >
         </activity>
+        <activity
+            android:name=".EditIdeaPageActivity"
+            android:label="EditIdeaPageActivity" >
+        </activity>
     </application>
 
 </manifest>

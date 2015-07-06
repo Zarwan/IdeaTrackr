@@ -11,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:inputType="textPersonName"
-        android:text="Title"
+        android:text="@string/new_idea_title"
         android:ems="10"
         android:id="@+id/ideaTitle"
         android:layout_marginLeft="27dp"
@@ -31,12 +31,12 @@
         android:layout_alignLeft="@+id/ideaTitle"
         android:layout_alignStart="@+id/ideaTitle"
         android:layout_marginTop="60dp"
-        android:text="Details" />
+        android:text="@string/new_idea_details" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="SAVE IDEA"
+        android:text="@string/save_new_idea_bttn"
         android:id="@+id/saveIdeaButton"
         android:onClick="onSaveIdeaButtonClick"
         android:layout_alignParentBottom="true"

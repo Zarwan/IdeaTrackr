@@ -5,15 +5,17 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 
+import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_DETAILS_KEY;
+import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_ID_KEY;
+import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_TITLE_KEY;
+import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_EDIT_KEY;
+
 public class NewIdeaPageActivity extends AppCompatActivity {
-    private static final String IDEA_TITLE_KEY = "title";
-    private static final String IDEA_DETAILS_KEY = "details";
     private Context myContext;
     private SharedPreferences sharedPref;
     private static int id = -1;
@@ -64,13 +66,13 @@ public class NewIdeaPageActivity extends AppCompatActivity {
 
         editor.putString(IDEA_TITLE_KEY, ideaTitle.getText().toString());
         editor.putString(IDEA_DETAILS_KEY, ideaDetails.getText().toString());
-        editor.commit();
+        editor.apply();
 
         Intent intent = new Intent(v.getContext(), MainActivity.class);
         intent.putExtra(IDEA_TITLE_KEY, ideaTitle.getText().toString());
         intent.putExtra(IDEA_DETAILS_KEY, ideaDetails.getText().toString());
-        intent.putExtra("Edit", false);
-        intent.putExtra("ID", id);
+        intent.putExtra(IDEA_EDIT_KEY, false);
+        intent.putExtra(IDEA_ID_KEY, id);
         startActivity(intent);
     }
 }
