@@ -32,10 +32,12 @@ public class MainActivity extends AppCompatActivity {
         ideasListView = (ListView) findViewById(R.id.ideasListView);
 
         Intent intent = getIntent();
-        if (intent != null) {
+        if (intent != null && intent.hasExtra("Edit")) {
 
             if (intent.getBooleanExtra("Edit", false)) {
-
+                int id = intent.getIntExtra("ID", -1);
+                ideaData.get(id).set(0, intent.getStringExtra("title"));
+                ideaData.get(id).set(1, intent.getStringExtra("details"));
             } else {
                 List<String> data = new ArrayList<String>();
                 data.add(intent.getStringExtra("title"));

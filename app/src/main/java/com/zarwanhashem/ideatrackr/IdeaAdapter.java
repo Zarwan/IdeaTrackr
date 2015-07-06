@@ -26,11 +26,11 @@ public class IdeaAdapter extends ArrayAdapter<Button> {
 
         idea.setOnClickListener(new View.OnClickListener() {
 
-            @Override
             public void onClick(View v) {
                 Intent intent = new Intent(v.getContext(), EditIdeaPageActivity.class);
                 intent.putExtra("title", ideaData.get(POSITION).get(0));
                 intent.putExtra("details", ideaData.get(POSITION).get(1));
+                intent.putExtra("ID", POSITION);
                 PARENT.getContext().startActivity(intent);
             }
         });

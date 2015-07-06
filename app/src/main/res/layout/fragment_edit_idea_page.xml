@@ -31,12 +31,12 @@
         android:layout_alignLeft="@+id/ideaTitle"
         android:layout_alignStart="@+id/ideaTitle"
         android:layout_marginTop="60dp"
-        android:text="Details" />
+        android:text="@string/default_descrip" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="SAVE CHANGES"
+        android:text="@string/save_edit_bttn"
         android:id="@+id/saveIdeaButton"
         android:onClick="onSaveIdeaButtonClick"
         android:layout_alignParentBottom="true"

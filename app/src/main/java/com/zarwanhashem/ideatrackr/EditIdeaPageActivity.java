@@ -17,6 +17,7 @@ public class EditIdeaPageActivity extends AppCompatActivity {
 
     private Context myContext;
     private static SharedPreferences sharedPref;
+    private int id;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,10 +34,12 @@ public class EditIdeaPageActivity extends AppCompatActivity {
             setTitle(intent.getStringExtra("title"));
             ideaTitle.setText(intent.getStringExtra(IDEA_TITLE_KEY));
             ideaDetails.setText(intent.getStringExtra(IDEA_DETAILS_KEY));
+            id = intent.getIntExtra("ID", -1);
         } else {
             setTitle("Error - no idea provided to edit");
             ideaTitle.setText("Error");
             ideaDetails.setText("Error");
+            id = -1;
         }
     }
 
@@ -63,7 +66,7 @@ public class EditIdeaPageActivity extends AppCompatActivity {
     }
 
 
-    public void onSaveIdeaButtonClicked(View v) {
+    public void onSaveIdeaButtonClick(View v) {
         SharedPreferences.Editor editor = sharedPref.edit();
         EditText ideaTitle = (EditText)findViewById(R.id.ideaTitle);
         EditText ideaDetails = (EditText)findViewById(R.id.ideaDetails);
@@ -76,6 +79,7 @@ public class EditIdeaPageActivity extends AppCompatActivity {
         intent.putExtra(IDEA_TITLE_KEY, ideaTitle.getText().toString());
         intent.putExtra(IDEA_DETAILS_KEY, ideaDetails.getText().toString());
         intent.putExtra("Edit", true);
+        intent.putExtra("ID", id);
         startActivity(intent);
     }
 }
