@@ -16,19 +16,22 @@ import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_TITLE_KEY;
 import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_EDIT_KEY;
 
 public class NewIdeaPageActivity extends AppCompatActivity {
-    private Context myContext;
-    private SharedPreferences sharedPref;
+    private static SharedPreferences sharedPref;
     private static int id = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_idea_page);
-        myContext = getApplicationContext();
+        Context myContext = getApplicationContext();
 
         EditText ideaTitle = (EditText)findViewById(R.id.ideaTitle);
         EditText ideaDetails = (EditText)findViewById(R.id.ideaDetails);
         sharedPref = myContext.getSharedPreferences("sharedPref", 0);
+
+        if (id == -1 && sharedPref.contains(IDEA_ID_KEY)) {
+            id = sharedPref.getInt(IDEA_ID_KEY, -1);
+        }
 
         setTitle("Create a New Idea");
         ideaTitle.setText("Title");
@@ -64,8 +67,7 @@ public class NewIdeaPageActivity extends AppCompatActivity {
         EditText ideaTitle = (EditText)findViewById(R.id.ideaTitle);
         EditText ideaDetails = (EditText)findViewById(R.id.ideaDetails);
 
-        editor.putString(IDEA_TITLE_KEY, ideaTitle.getText().toString());
-        editor.putString(IDEA_DETAILS_KEY, ideaDetails.getText().toString());
+        editor.putInt(IDEA_ID_KEY, -1);
         editor.apply();
 
         Intent intent = new Intent(v.getContext(), MainActivity.class);
