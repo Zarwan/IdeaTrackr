@@ -8,7 +8,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 
 import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_DETAILS_KEY;
@@ -17,6 +16,9 @@ import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_TITLE_KEY;
 import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_EDIT_KEY;
 import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_DELETE_KEY;
 
+/**
+ * Page where users edit existing ideas
+ */
 public class EditIdeaPageActivity extends AppCompatActivity {
     private int id;
 

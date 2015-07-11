@@ -15,6 +15,9 @@ import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_ID_KEY;
 import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_TITLE_KEY;
 import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_EDIT_KEY;
 
+/**
+ * Page where users create new ideas
+ */
 public class NewIdeaPageActivity extends AppCompatActivity {
     private static SharedPreferences sharedPref;
     private static int id = -1;
@@ -24,19 +27,21 @@ public class NewIdeaPageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_idea_page);
         Context myContext = getApplicationContext();
-
         EditText ideaTitle = (EditText)findViewById(R.id.ideaTitle);
         EditText ideaDetails = (EditText)findViewById(R.id.ideaDetails);
         sharedPref = myContext.getSharedPreferences("sharedPref", 0);
 
+        //Invalid ID sent
         if (id == -1 && sharedPref.contains(IDEA_ID_KEY)) {
             id = sharedPref.getInt(IDEA_ID_KEY, -1);
         }
 
+        //Set default text
         setTitle("Create a New Idea");
         ideaTitle.setText("Title");
         ideaDetails.setText("Details");
-        id++;
+
+        id++; //update button ID (index used to refer to it in arrays)
     }
 
 
@@ -63,13 +68,15 @@ public class NewIdeaPageActivity extends AppCompatActivity {
     }
 
     public void onSaveIdeaButtonClick(View v) {
+
+        //Save new idea data to sharedPreferences
         SharedPreferences.Editor editor = sharedPref.edit();
         EditText ideaTitle = (EditText)findViewById(R.id.ideaTitle);
         EditText ideaDetails = (EditText)findViewById(R.id.ideaDetails);
-
         editor.putInt(IDEA_ID_KEY, -1);
         editor.apply();
 
+        //Package information into an intent to go back to the main page
         Intent intent = new Intent(v.getContext(), MainActivity.class);
         intent.putExtra(IDEA_TITLE_KEY, ideaTitle.getText().toString());
         intent.putExtra(IDEA_DETAILS_KEY, ideaDetails.getText().toString());

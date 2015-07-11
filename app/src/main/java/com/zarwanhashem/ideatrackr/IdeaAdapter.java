@@ -13,6 +13,9 @@ import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_DETAILS_KEY;
 import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_ID_KEY;
 import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_TITLE_KEY;
 
+/**
+ * Used to provide the ListView of ideas on the MainActivity
+ */
 public class IdeaAdapter extends ArrayAdapter<Button> {
     private static List<List<String>> ideaData;
 
@@ -29,6 +32,7 @@ public class IdeaAdapter extends ArrayAdapter<Button> {
 
         idea.setOnClickListener(new View.OnClickListener() {
 
+            //onClick of ideas takes them to the edit idea page
             public void onClick(View v) {
                 Intent intent = new Intent(v.getContext(), EditIdeaPageActivity.class);
                 intent.putExtra(IDEA_TITLE_KEY, ideaData.get(POSITION).get(0));

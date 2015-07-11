@@ -17,7 +17,9 @@ import com.google.gson.GsonBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-
+/**
+ * Main page; contains list of existing ideas
+ */
 public class MainActivity extends AppCompatActivity {
     public static final String IDEA_TITLE_KEY = "Title";
     public static final String IDEA_DETAILS_KEY = "Details";
