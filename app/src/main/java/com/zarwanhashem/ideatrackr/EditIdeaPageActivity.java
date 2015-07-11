@@ -1,11 +1,16 @@
 package com.zarwanhashem.ideatrackr;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.ColorInt;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 
 import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_DETAILS_KEY;
@@ -21,6 +26,8 @@ public class EditIdeaPageActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_idea_page);
+        Button deleteIdeaBttn = (Button) findViewById(R.id.deleteIdeaButton);
+        deleteIdeaBttn.setBackgroundColor(Color.RED);
 
         Intent intent = getIntent();
         EditText ideaTitle = (EditText)findViewById(R.id.ideaTitle);
@@ -77,11 +84,25 @@ public class EditIdeaPageActivity extends AppCompatActivity {
     }
 
     public void onDeleteIdeaButtonClick(View v) {
-        Intent intent = new Intent(v.getContext(), MainActivity.class);
-        intent.putExtra(IDEA_EDIT_KEY, true);
-        intent.putExtra(IDEA_ID_KEY, id);
-        id--;
-        intent.putExtra(IDEA_DELETE_KEY, true);
-        startActivity(intent);
+        final Intent intent = new Intent(v.getContext(), MainActivity.class);
+
+        //Add confirmation dialog to delete idea button
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Idea")
+                .setMessage("Are you sure? You cannot restore a deleted idea.")
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        intent.putExtra(IDEA_EDIT_KEY, true);
+                        intent.putExtra(IDEA_ID_KEY, id);
+                        id--;
+                        intent.putExtra(IDEA_DELETE_KEY, true);
+                        startActivity(intent);
+                    }
+                })
+                .setNegativeButton(android.R.string.no, null).show();
     }
 }
