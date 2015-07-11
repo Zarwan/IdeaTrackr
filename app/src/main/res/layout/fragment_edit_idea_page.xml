@@ -39,9 +39,21 @@
         android:text="@string/save_edit_bttn"
         android:id="@+id/saveIdeaButton"
         android:onClick="onSaveIdeaButtonClick"
+        android:layout_above="@+id/deleteIdeaButton"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/delete_idea_bttn"
+        android:id="@+id/deleteIdeaButton"
+        android:onClick="onDeleteIdeaButtonClick"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignRight="@+id/saveIdeaButton"
+        android:layout_alignEnd="@+id/saveIdeaButton" />
 </RelativeLayout>

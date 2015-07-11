@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String IDEA_DETAILS_KEY = "Details";
     public static final String IDEA_EDIT_KEY = "Edit";
     public static final String IDEA_ID_KEY = "ID";
+    public static final String IDEA_DELETE_KEY = "Delete";
     private final String IDEAS_KEY = "Ideas";
     private final String IDEA_DATA_KEY = "IdeaData";
     private static List<Button> ideas = new ArrayList<Button>();
@@ -50,13 +51,26 @@ public class MainActivity extends AppCompatActivity {
             ideaData = gson.fromJson(dataValue, ArrayList.class);
         }
 
+
+        //Update ideas
         Intent intent = getIntent();
         if (intent != null && intent.hasExtra(IDEA_EDIT_KEY)) {
 
             if (intent.getBooleanExtra(IDEA_EDIT_KEY, false)) {
                 int id = intent.getIntExtra(IDEA_ID_KEY, -1);
-                ideaData.get(id).set(0, intent.getStringExtra(IDEA_TITLE_KEY));
-                ideaData.get(id).set(1, intent.getStringExtra(IDEA_DETAILS_KEY));
+
+                //Delete an idea
+                if (intent.getBooleanExtra(IDEA_DELETE_KEY, false)) {
+                    ideaData.remove(id);
+                    ideas.remove(id);
+
+                //Edit data of an existing idea
+                } else {
+                    ideaData.get(id).set(0, intent.getStringExtra(IDEA_TITLE_KEY));
+                    ideaData.get(id).set(1, intent.getStringExtra(IDEA_DETAILS_KEY));
+                }
+
+            //Add a new idea
             } else {
                 List<String> data = new ArrayList<String>();
                 data.add(intent.getStringExtra(IDEA_TITLE_KEY));
@@ -68,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
 
         IdeaAdapter listAdapter = new IdeaAdapter(myContext, R.layout.idea_button, ideas, ideaData);
         ideasListView.setAdapter(listAdapter);
+
 
         //Save update ideas to sharedPref
         SharedPreferences.Editor editor = sharedPref.edit();

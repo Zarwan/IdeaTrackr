@@ -12,6 +12,7 @@ import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_DETAILS_KEY;
 import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_ID_KEY;
 import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_TITLE_KEY;
 import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_EDIT_KEY;
+import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_DELETE_KEY;
 
 public class EditIdeaPageActivity extends AppCompatActivity {
     private int id;
@@ -71,6 +72,16 @@ public class EditIdeaPageActivity extends AppCompatActivity {
         intent.putExtra(IDEA_DETAILS_KEY, ideaDetails.getText().toString());
         intent.putExtra(IDEA_EDIT_KEY, true);
         intent.putExtra(IDEA_ID_KEY, id);
+        intent.putExtra(IDEA_DELETE_KEY, false);
+        startActivity(intent);
+    }
+
+    public void onDeleteIdeaButtonClick(View v) {
+        Intent intent = new Intent(v.getContext(), MainActivity.class);
+        intent.putExtra(IDEA_EDIT_KEY, true);
+        intent.putExtra(IDEA_ID_KEY, id);
+        id--;
+        intent.putExtra(IDEA_DELETE_KEY, true);
         startActivity(intent);
     }
 }
