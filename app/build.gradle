@@ -25,4 +25,7 @@ dependencies {
     compile files('libs/gson-2.2.4.jar')
     compile 'com.google.api-client:google-api-client:1.18.0-rc'
     compile files('libs/gdata-client-1.0.jar')
+    compile files('libs/gdata-core-1.0.jar')
+    compile files('libs/gdata-spreadsheet-3.0.jar')
+    compile files('libs/guava-18.0.jar')
 }
