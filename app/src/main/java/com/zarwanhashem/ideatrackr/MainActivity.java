@@ -2,25 +2,33 @@ package com.zarwanhashem.ideatrackr;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.Scopes;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.plus.Plus;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
 
+
 /**
  * Main page; contains list of existing ideas
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
     public static final String IDEA_TITLE_KEY = "Title";
     public static final String IDEA_DETAILS_KEY = "Details";
     public static final String IDEA_EDIT_KEY = "Edit";
@@ -33,6 +41,49 @@ public class MainActivity extends AppCompatActivity {
     private static SharedPreferences sharedPref;
     private Context myContext;
 
+    /* Request code used to invoke sign in user interactions. */
+    private static final int RC_SIGN_IN = 0;
+
+    /* Client used to interact with Google APIs. */
+    private GoogleApiClient mGoogleApiClient;
+
+    /* Is there a ConnectionResult resolution in progress? */
+    private boolean mIsResolving = false;
+
+    /* Should we automatically resolve ConnectionResults when possible? */
+    private boolean mShouldResolve = false;
+
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == R.id.sign_in_button) {
+            onSignInClicked();
+        }
+
+        // ...
+    }
+
+    private void onSignInClicked() {
+        // User clicked the sign-in button, so begin the sign-in process and automatically
+        // attempt to resolve any errors that occur.
+        mShouldResolve = true;
+        mGoogleApiClient.connect();
+
+        // Show a message to the user that we are signing in.
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mGoogleApiClient.disconnect();
+    }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
         myContext = getApplicationContext();
 
         sharedPref = myContext.getSharedPreferences("sharedPref", 0);
-        ListView ideasListView = (ListView) findViewById(R.id.ideasListView);
 
         //Load from sharedPref if restoring session
         if (ideas.size() == 0 && sharedPref.contains(IDEAS_KEY)) {
@@ -55,7 +105,32 @@ public class MainActivity extends AppCompatActivity {
 
 
         //Update ideas
-        Intent intent = getIntent();
+        updateIdeas(getIntent());
+
+
+        //Save update ideas to sharedPref
+        SharedPreferences.Editor editor = sharedPref.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(ideaData);
+        editor.putString(IDEA_DATA_KEY, json);
+        editor.putInt(IDEAS_KEY, ideas.size());
+        editor.apply();
+
+
+        findViewById(R.id.sign_in_button).setOnClickListener(this);
+
+
+        // Build GoogleApiClient with access to basic profile
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(Plus.API)
+                .addScope(new Scope(Scopes.PLUS_LOGIN))
+                .build();
+
+    }
+
+    private void updateIdeas(Intent intent) {
         if (intent != null && intent.hasExtra(IDEA_EDIT_KEY)) {
 
             if (intent.getBooleanExtra(IDEA_EDIT_KEY, false)) {
@@ -83,16 +158,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         IdeaAdapter listAdapter = new IdeaAdapter(myContext, R.layout.idea_button, ideas, ideaData);
-        ideasListView.setAdapter(listAdapter);
-
-
-        //Save update ideas to sharedPref
-        SharedPreferences.Editor editor = sharedPref.edit();
-        Gson gson = new Gson();
-        String json = gson.toJson(ideaData);
-        editor.putString(IDEA_DATA_KEY, json);
-        editor.putInt(IDEAS_KEY, ideas.size());
-        editor.apply();
+        ListView ideasListView = (ListView) findViewById(R.id.ideasListView);
     }
 
 
@@ -122,5 +188,60 @@ public class MainActivity extends AppCompatActivity {
     public void onNewIdeaButtonClicked(View v) {
         Intent intent = new Intent(v.getContext(), NewIdeaPageActivity.class);
         startActivity(intent);
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        // onConnected indicates that an account was selected on the device, that the selected
+        // account has granted any requested permissions to our app and that we were able to
+        // establish a service connection to Google Play services.
+        mShouldResolve = false;
+
+        // Show the signed-in UI
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        // Could not connect to Google Play Services.  The user needs to select an account,
+        // grant permissions or resolve an error in order to sign in. Refer to the javadoc for
+        // ConnectionResult to see possible error codes.
+
+        if (!mIsResolving && mShouldResolve) {
+            if (connectionResult.hasResolution()) {
+                try {
+                    connectionResult.startResolutionForResult(this, RC_SIGN_IN);
+                    mIsResolving = true;
+                } catch (IntentSender.SendIntentException e) {
+                    mIsResolving = false;
+                    mGoogleApiClient.connect();
+                }
+            } else {
+                // Could not resolve the connection result, show the user an
+                // error dialog.
+            }
+        } else {
+            // Show the signed-out UI
+        }
+    }
+
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == RC_SIGN_IN) {
+            // If the error resolution was not successful we should not resolve further.
+            if (resultCode != RESULT_OK) {
+                mShouldResolve = false;
+            }
+
+            mIsResolving = false;
+            mGoogleApiClient.connect();
+        }
     }
 }

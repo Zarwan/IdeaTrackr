@@ -1,8 +1,9 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
 
 android {
     compileSdkVersion 22
-    buildToolsVersion "23.0.0 rc2"
+    buildToolsVersion '22.0.1'
 
     defaultConfig {
         applicationId "com.zarwanhashem.ideatrackr"
@@ -10,6 +11,7 @@ android {
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
+        multiDexEnabled = true
     }
     buildTypes {
         release {
@@ -22,10 +24,7 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:22.2.0'
-    compile files('libs/gson-2.2.4.jar')
-    compile 'com.google.api-client:google-api-client:1.18.0-rc'
-    compile files('libs/gdata-client-1.0.jar')
-    compile files('libs/gdata-core-1.0.jar')
-    compile files('libs/gdata-spreadsheet-3.0.jar')
-    compile files('libs/guava-18.0.jar')
+    compile 'com.google.android.gms:play-services:7.5.0'
+    compile 'com.google.code.gson:gson:2.3.1'
+    compile group: 'com.google.guava', name: 'guava', version: '18.0'
 }
