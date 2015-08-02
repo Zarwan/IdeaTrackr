@@ -15,6 +15,7 @@ import android.widget.ListView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.Scopes;
+import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.plus.Plus;
@@ -23,6 +24,8 @@ import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.google.android.gms.appstate.AppStateManager.signOut;
 
 
 /**
@@ -34,6 +37,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public static final String IDEA_EDIT_KEY = "Edit";
     public static final String IDEA_ID_KEY = "ID";
     public static final String IDEA_DELETE_KEY = "Delete";
+    public static final String SIGNED_IN_KEY = "SignedIn";
     private final String IDEAS_KEY = "Ideas";
     private final String IDEA_DATA_KEY = "IdeaData";
     private static List<Button> ideas = new ArrayList<Button>();
@@ -52,36 +56,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     /* Should we automatically resolve ConnectionResults when possible? */
     private boolean mShouldResolve = false;
+    private static boolean signedIn = false;
 
-    @Override
-    public void onClick(View v) {
-        if (v.getId() == R.id.sign_in_button) {
-            onSignInClicked();
-        }
-
-        // ...
-    }
-
-    private void onSignInClicked() {
-        // User clicked the sign-in button, so begin the sign-in process and automatically
-        // attempt to resolve any errors that occur.
-        mShouldResolve = true;
-        mGoogleApiClient.connect();
-
-        // Show a message to the user that we are signing in.
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mGoogleApiClient.connect();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        mGoogleApiClient.disconnect();
-    }
 
 
     @Override
@@ -103,10 +79,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             ideaData = gson.fromJson(dataValue, ArrayList.class);
         }
 
+        if (sharedPref.contains(SIGNED_IN_KEY)) {
+            signedIn = sharedPref.getBoolean(SIGNED_IN_KEY, false);
+        }
+
 
         //Update ideas
         updateIdeas(getIntent());
-
 
         //Save update ideas to sharedPref
         SharedPreferences.Editor editor = sharedPref.edit();
@@ -114,11 +93,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         String json = gson.toJson(ideaData);
         editor.putString(IDEA_DATA_KEY, json);
         editor.putInt(IDEAS_KEY, ideas.size());
+        editor.putBoolean(SIGNED_IN_KEY, signedIn);
         editor.apply();
 
+        IdeaAdapter listAdapter = new IdeaAdapter(myContext, R.layout.idea_button, ideas, ideaData);
+        ListView ideasListView = (ListView) findViewById(R.id.ideasListView);
+        ideasListView.setAdapter(listAdapter);
 
-        findViewById(R.id.sign_in_button).setOnClickListener(this);
-
+        View signInBttnView = findViewById(R.id.sign_in_button);
+        signInBttnView.setOnClickListener(this);
 
         // Build GoogleApiClient with access to basic profile
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -128,6 +111,28 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 .addScope(new Scope(Scopes.PLUS_LOGIN))
                 .build();
 
+        if (mGoogleApiClient != null && signedIn) {
+            findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
+            findViewById(R.id.sign_in_button).setVisibility(View.GONE);
+        } else {
+            findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
+            findViewById(R.id.sign_out_button).setVisibility(View.GONE);
+        }
+    }
+
+    public void onSignOutButtonClicked(View v) {
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+            Plus.AccountApi.clearDefaultAccount(mGoogleApiClient);
+            mGoogleApiClient.disconnect();
+
+            signedIn = false;
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putBoolean(SIGNED_IN_KEY, signedIn);
+            editor.apply();
+
+            findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
+            findViewById(R.id.sign_out_button).setVisibility(View.GONE);
+        }
     }
 
     private void updateIdeas(Intent intent) {
@@ -156,9 +161,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 ideas.add(new Button(myContext));
             }
         }
-
-        IdeaAdapter listAdapter = new IdeaAdapter(myContext, R.layout.idea_button, ideas, ideaData);
-        ListView ideasListView = (ListView) findViewById(R.id.ideasListView);
     }
 
 
@@ -186,6 +188,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
     public void onNewIdeaButtonClicked(View v) {
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putBoolean(SIGNED_IN_KEY, signedIn);
+        editor.apply();
+
         Intent intent = new Intent(v.getContext(), NewIdeaPageActivity.class);
         startActivity(intent);
     }
@@ -196,8 +202,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         // account has granted any requested permissions to our app and that we were able to
         // establish a service connection to Google Play services.
         mShouldResolve = false;
+        signedIn = true;
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putBoolean(SIGNED_IN_KEY, signedIn);
+        editor.apply();
 
         // Show the signed-in UI
+        findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
+        findViewById(R.id.sign_in_button).setVisibility(View.GONE);
     }
 
     @Override
@@ -242,6 +254,45 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
             mIsResolving = false;
             mGoogleApiClient.connect();
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == R.id.sign_in_button) {
+            onSignInClicked();
+        }
+
+        // ...
+    }
+
+    private void onSignInClicked() {
+
+        if (mGoogleApiClient == null) {
+            return;
+        }
+        // User clicked the sign-in button, so begin the sign-in process and automatically
+        // attempt to resolve any errors that occur.
+        mShouldResolve = true;
+        mGoogleApiClient.connect();
+
+        // Show a message to the user that we are signing in.
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.connect();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.disconnect();
         }
     }
 }
