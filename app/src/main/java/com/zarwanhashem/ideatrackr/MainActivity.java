@@ -19,22 +19,14 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.drive.Drive;
-import com.google.android.gms.drive.DriveFile;
 import com.google.android.gms.drive.DriveFolder;
 import com.google.android.gms.drive.MetadataChangeSet;
 import com.google.android.gms.plus.Plus;
-import com.google.gdata.client.spreadsheet.SpreadsheetService;
-import com.google.gdata.data.spreadsheet.SpreadsheetEntry;
-import com.google.gdata.data.spreadsheet.SpreadsheetFeed;
-import com.google.gdata.util.ServiceException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
 
 /**
  * Main page; contains list of existing ideas
@@ -136,9 +128,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             mGoogleApiClient.disconnect();
 
             signedIn = false;
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putBoolean(SIGNED_IN_KEY, signedIn);
-            editor.apply();
+            updateSignedIn();
 
             findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
             findViewById(R.id.sign_out_button).setVisibility(View.GONE);
@@ -196,11 +186,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         return super.onOptionsItemSelected(item);
     }
 
-
-    public void onNewIdeaButtonClicked(View v) {
+    public void updateSignedIn() {
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putBoolean(SIGNED_IN_KEY, signedIn);
         editor.apply();
+    }
+
+
+    public void onNewIdeaButtonClicked(View v) {
+        updateSignedIn();
 
         Intent intent = new Intent(v.getContext(), NewIdeaPageActivity.class);
         startActivity(intent);
@@ -213,15 +207,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         // establish a service connection to Google Play services.
         mShouldResolve = false;
         signedIn = true;
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putBoolean(SIGNED_IN_KEY, signedIn);
-        editor.apply();
+        updateSignedIn();
 
         // Show the signed-in UI
         findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
         findViewById(R.id.sign_in_button).setVisibility(View.GONE);
 
-        new RetrieveFeedTask().execute("https://spreadsheets.google.com/feeds/spreadsheets/private/full");
+        new RetrieveFeedTask().execute("");
     }
 
     @Override
@@ -310,9 +302,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     private class RetrieveFeedTask extends AsyncTask<String, Void, Void> {
 
-        final String CLIENT_ID = "335370571308-6ta66ktvirda9hefqubkbn7l655dgeot.apps.googleusercontent.com";
-        final String SCOPES = "https://docs.google.com/feeds https://spreadsheets.google.com/feeds";
-
         ResultCallback<DriveFolder.DriveFolderResult> folderCreatedCallback = new ResultCallback<DriveFolder.DriveFolderResult>() {
             @Override
             public void onResult(DriveFolder.DriveFolderResult driveFolderResult) {
@@ -324,30 +313,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             }
         };
 
+
         @Override
         protected Void doInBackground(String... urls) {
+            createIdeasFolder();
 
+            return null;
+        }
+
+        private void createIdeasFolder() {
             MetadataChangeSet changeSet = new MetadataChangeSet.Builder()
-                    .setTitle("MyFolder").build();
+                    .setTitle("IdeaTrackr").build();
+
             Drive.DriveApi.getRootFolder(mGoogleApiClient).createFolder(
                     mGoogleApiClient, changeSet).setResultCallback(folderCreatedCallback);
-
-            /*SpreadsheetService service = new SpreadsheetService("MySpreadsheetIntegration-v1");
-
-            try {
-                URL SPREADSHEET_FEED_URL = new URL(urls[0]);
-                Plus.AccountApi.getAccountName(mGoogleApiClient);
-                SpreadsheetFeed feed = service.getFeed(SPREADSHEET_FEED_URL, SpreadsheetFeed.class);
-                List<SpreadsheetEntry> spreadsheets = feed.getEntries();
-
-                for (SpreadsheetEntry spreadsheet : spreadsheets) {
-                    System.out.println(spreadsheet.getTitle().getPlainText());
-                }
-
-            } catch (ServiceException | IOException e) {
-                e.printStackTrace();
-            }*/
-            return null;
         }
     }
 }
