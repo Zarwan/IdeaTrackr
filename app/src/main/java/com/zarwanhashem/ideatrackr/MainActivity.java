@@ -4,9 +4,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -15,17 +15,25 @@ import android.widget.ListView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.Scopes;
-import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.drive.Drive;
+import com.google.android.gms.drive.DriveFile;
+import com.google.android.gms.drive.DriveFolder;
+import com.google.android.gms.drive.MetadataChangeSet;
 import com.google.android.gms.plus.Plus;
+import com.google.gdata.client.spreadsheet.SpreadsheetService;
+import com.google.gdata.data.spreadsheet.SpreadsheetEntry;
+import com.google.gdata.data.spreadsheet.SpreadsheetFeed;
+import com.google.gdata.util.ServiceException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.google.android.gms.appstate.AppStateManager.signOut;
 
 
 /**
@@ -108,6 +116,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(Plus.API)
+                .addApi(Drive.API)
+                .addScope(Drive.SCOPE_FILE)
                 .addScope(new Scope(Scopes.PLUS_LOGIN))
                 .build();
 
@@ -210,6 +220,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         // Show the signed-in UI
         findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
         findViewById(R.id.sign_in_button).setVisibility(View.GONE);
+
+        new RetrieveFeedTask().execute("https://spreadsheets.google.com/feeds/spreadsheets/private/full");
     }
 
     @Override
@@ -293,6 +305,49 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         if (mGoogleApiClient != null) {
             mGoogleApiClient.disconnect();
+        }
+    }
+
+    private class RetrieveFeedTask extends AsyncTask<String, Void, Void> {
+
+        final String CLIENT_ID = "335370571308-6ta66ktvirda9hefqubkbn7l655dgeot.apps.googleusercontent.com";
+        final String SCOPES = "https://docs.google.com/feeds https://spreadsheets.google.com/feeds";
+
+        ResultCallback<DriveFolder.DriveFolderResult> folderCreatedCallback = new ResultCallback<DriveFolder.DriveFolderResult>() {
+            @Override
+            public void onResult(DriveFolder.DriveFolderResult driveFolderResult) {
+                if (!driveFolderResult.getStatus().isSuccess()) {
+                    System.out.println("Error while trying to create the folder");
+                    return;
+                }
+                System.out.println("Created a folder: " + driveFolderResult.getDriveFolder().getDriveId());
+            }
+        };
+
+        @Override
+        protected Void doInBackground(String... urls) {
+
+            MetadataChangeSet changeSet = new MetadataChangeSet.Builder()
+                    .setTitle("MyFolder").build();
+            Drive.DriveApi.getRootFolder(mGoogleApiClient).createFolder(
+                    mGoogleApiClient, changeSet).setResultCallback(folderCreatedCallback);
+
+            /*SpreadsheetService service = new SpreadsheetService("MySpreadsheetIntegration-v1");
+
+            try {
+                URL SPREADSHEET_FEED_URL = new URL(urls[0]);
+                Plus.AccountApi.getAccountName(mGoogleApiClient);
+                SpreadsheetFeed feed = service.getFeed(SPREADSHEET_FEED_URL, SpreadsheetFeed.class);
+                List<SpreadsheetEntry> spreadsheets = feed.getEntries();
+
+                for (SpreadsheetEntry spreadsheet : spreadsheets) {
+                    System.out.println(spreadsheet.getTitle().getPlainText());
+                }
+
+            } catch (ServiceException | IOException e) {
+                e.printStackTrace();
+            }*/
+            return null;
         }
     }
 }
