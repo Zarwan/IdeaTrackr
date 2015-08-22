@@ -19,8 +19,12 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.drive.Drive;
+import com.google.android.gms.drive.DriveApi;
 import com.google.android.gms.drive.DriveFolder;
 import com.google.android.gms.drive.MetadataChangeSet;
+import com.google.android.gms.drive.query.Filters;
+import com.google.android.gms.drive.query.Query;
+import com.google.android.gms.drive.query.SearchableField;
 import com.google.android.gms.plus.Plus;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -213,7 +217,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
         findViewById(R.id.sign_in_button).setVisibility(View.GONE);
 
-        new RetrieveFeedTask().execute("");
+        mResultsAdapter = new ResultsAdapter(myContext);
+        ideaDriveFolderExists();
+        System.out.println("test");
     }
 
     @Override
@@ -294,6 +300,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     protected void onStop() {
         super.onStop();
+        mResultsAdapter.clear();
 
         if (mGoogleApiClient != null) {
             mGoogleApiClient.disconnect();
@@ -329,4 +336,28 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     mGoogleApiClient, changeSet).setResultCallback(folderCreatedCallback);
         }
     }
+
+    public boolean ideaDriveFolderExists() {
+        Query query = new Query.Builder()
+                .addFilter(Filters.contains(SearchableField.TITLE, "IdeaTrackr"))
+                .build();
+        Drive.DriveApi.query(mGoogleApiClient, query)
+                .setResultCallback(metadataCallback);
+        return false;
+    }
+
+    private ResultsAdapter mResultsAdapter;
+
+    final private ResultCallback<DriveApi.MetadataBufferResult> metadataCallback =
+            new ResultCallback<DriveApi.MetadataBufferResult>() {
+                @Override
+                public void onResult(DriveApi.MetadataBufferResult result) {
+                    if (!result.getStatus().isSuccess()) {
+                        System.out.println("Problem when retrieving results");
+                        return;
+                    }
+                    mResultsAdapter.clear();
+                    mResultsAdapter.append(result.getMetadataBuffer());
+                }
+            };
 }
