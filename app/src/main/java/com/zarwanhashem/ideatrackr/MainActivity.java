@@ -6,6 +6,7 @@ import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -15,13 +16,25 @@ import android.widget.ListView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.drive.Drive;
+import com.google.android.gms.drive.DriveApi;
+import com.google.android.gms.drive.DriveContents;
+import com.google.android.gms.drive.DriveFolder;
+import com.google.android.gms.drive.DriveId;
+import com.google.android.gms.drive.MetadataChangeSet;
+import com.google.android.gms.drive.OpenFileActivityBuilder;
 import com.google.android.gms.plus.Plus;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -85,28 +98,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         updateButtonVisibility();
     }
 
-    private void updateButtonVisibility() {
-        if (mGoogleApiClient != null && signedIn) {
-            findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
-            findViewById(R.id.back_up_ideas_button).setVisibility(View.VISIBLE);
-            findViewById(R.id.sign_in_button).setVisibility(View.GONE);
-        } else {
-            findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
-            findViewById(R.id.sign_out_button).setVisibility(View.GONE);
-            findViewById(R.id.back_up_ideas_button).setVisibility(View.GONE);
-        }
-    }
-
-    private void updateSharedPreferences() {
-        SharedPreferences.Editor editor = sharedPref.edit();
-        Gson gson = new Gson();
-        String json = gson.toJson(ideaData);
-        editor.putString(IDEA_DATA_KEY, json);
-        editor.putInt(IDEAS_KEY, ideas.size());
-        editor.putBoolean(SIGNED_IN_KEY, signedIn);
-        editor.apply();
-    }
-
     private void loadFromSharedPreferences() {
         for (int i = 0; i < sharedPref.getInt(IDEAS_KEY, 0); i++) {
             ideas.add(new Button(myContext));
@@ -131,8 +122,89 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
     }
 
-    public void onBackupIdeasButtonClicked(View v) {
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == R.id.sign_in_button) {
+            onSignInClicked();
+        }
+    }
 
+    private void onSignInClicked() {
+
+        if (mGoogleApiClient == null) {
+            return;
+        }
+        // User clicked the sign-in button, so begin the sign-in process and automatically
+        // attempt to resolve any errors that occur.
+        mShouldResolve = true;
+        mGoogleApiClient.connect();
+
+        // Show a message to the user that we are signing in.
+    }
+
+    public void onBackupIdeasButtonClicked(View v) {
+        if (mGoogleApiClient.isConnected()) {
+            Drive.DriveApi.newDriveContents(mGoogleApiClient)
+                    .setResultCallback(driveContentsCallback);
+        }
+    }
+
+    final private ResultCallback<DriveApi.DriveContentsResult> driveContentsCallback = new
+            ResultCallback<DriveApi.DriveContentsResult>() {
+                @Override
+                public void onResult(DriveApi.DriveContentsResult result) {
+                    if (!result.getStatus().isSuccess()) {
+                        Log.w("MyTag", "Error while trying to create new file contents");
+                        return;
+                    }
+                    final DriveContents driveContents = result.getDriveContents();
+
+                    // Perform I/O off the UI thread.
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            // write content to DriveContents
+                            OutputStream outputStream = driveContents.getOutputStream();
+                            Writer writer = new OutputStreamWriter(outputStream);
+                            try {
+                                writer.write("Hello World!");
+                                writer.close();
+                            } catch (IOException e) {
+                                Log.e("MyTag", e.getMessage());
+                            }
+
+                            Calendar date = Calendar.getInstance();
+                            MetadataChangeSet changeSet = new MetadataChangeSet.Builder()
+                                    .setTitle("Ideas: " + date.getTime())
+                                    .setMimeType("text/plain")
+                                    .setStarred(true).build();
+
+                            // create a file on root folder
+                            Drive.DriveApi.getRootFolder(mGoogleApiClient)
+                                    .createFile(mGoogleApiClient, changeSet, driveContents)
+                                    .setResultCallback(fileCallback);
+                        }
+                    }.start();
+                }
+            };
+
+    final private ResultCallback<DriveFolder.DriveFileResult> fileCallback = new
+            ResultCallback<DriveFolder.DriveFileResult>() {
+                @Override
+                public void onResult(DriveFolder.DriveFileResult result) {
+                    if (!result.getStatus().isSuccess()) {
+                        Log.w("MyTag", "Error while trying to create the file");
+                        return;
+                    }
+                    Log.d("MyTag", "Created a file with content: " + result.getDriveFile().getDriveId());
+                }
+            };
+
+    public void onNewIdeaButtonClicked(View v) {
+        updateSignedIn();
+
+        Intent intent = new Intent(v.getContext(), NewIdeaPageActivity.class);
+        startActivity(intent);
     }
 
     private void updateIdeas(Intent intent) {
@@ -163,6 +235,34 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
     }
 
+    public void updateSignedIn() {
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putBoolean(SIGNED_IN_KEY, signedIn);
+        editor.apply();
+    }
+
+    private void updateButtonVisibility() {
+        if (mGoogleApiClient != null && signedIn) {
+            findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
+            findViewById(R.id.back_up_ideas_button).setVisibility(View.VISIBLE);
+            findViewById(R.id.sign_in_button).setVisibility(View.GONE);
+        } else {
+            findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
+            findViewById(R.id.sign_out_button).setVisibility(View.GONE);
+            findViewById(R.id.back_up_ideas_button).setVisibility(View.GONE);
+        }
+    }
+
+    private void updateSharedPreferences() {
+        SharedPreferences.Editor editor = sharedPref.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(ideaData);
+        editor.putString(IDEA_DATA_KEY, json);
+        editor.putInt(IDEAS_KEY, ideas.size());
+        editor.putBoolean(SIGNED_IN_KEY, signedIn);
+        editor.apply();
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -186,19 +286,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         return super.onOptionsItemSelected(item);
     }
 
-    public void updateSignedIn() {
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putBoolean(SIGNED_IN_KEY, signedIn);
-        editor.apply();
-    }
-
-
-    public void onNewIdeaButtonClicked(View v) {
-        updateSignedIn();
-
-        Intent intent = new Intent(v.getContext(), NewIdeaPageActivity.class);
-        startActivity(intent);
-    }
 
     @Override
     public void onConnected(Bundle bundle) {
@@ -258,26 +345,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             mIsResolving = false;
             mGoogleApiClient.connect();
         }
-    }
-
-    @Override
-    public void onClick(View v) {
-        if (v.getId() == R.id.sign_in_button) {
-            onSignInClicked();
-        }
-    }
-
-    private void onSignInClicked() {
-
-        if (mGoogleApiClient == null) {
-            return;
-        }
-        // User clicked the sign-in button, so begin the sign-in process and automatically
-        // attempt to resolve any errors that occur.
-        mShouldResolve = true;
-        mGoogleApiClient.connect();
-
-        // Show a message to the user that we are signing in.
     }
 
     @Override
