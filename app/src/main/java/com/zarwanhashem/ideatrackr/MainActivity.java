@@ -167,7 +167,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                             OutputStream outputStream = driveContents.getOutputStream();
                             Writer writer = new OutputStreamWriter(outputStream);
                             try {
-                                writer.write("Hello World!");
+                                for (List<String> idea : ideaData) {
+                                    writer.write(idea.get(0) + ": " + idea.get(1) + "\n");
+                                }
                                 writer.close();
                             } catch (IOException e) {
                                 Log.e("MyTag", e.getMessage());
