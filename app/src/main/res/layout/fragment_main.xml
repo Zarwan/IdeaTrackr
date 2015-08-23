@@ -22,7 +22,7 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:id="@+id/ideasListView"
-        android:layout_below="@id/new_idea_button">
+        android:layout_below="@id/new_idea_button" >
     </ListView>
 
     <com.google.android.gms.common.SignInButton

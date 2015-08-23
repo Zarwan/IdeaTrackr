@@ -21,6 +21,8 @@ import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.drive.Drive;
 import com.google.android.gms.drive.DriveApi;
 import com.google.android.gms.drive.DriveFolder;
+import com.google.android.gms.drive.Metadata;
+import com.google.android.gms.drive.MetadataBuffer;
 import com.google.android.gms.drive.MetadataChangeSet;
 import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
@@ -217,7 +219,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
         findViewById(R.id.sign_in_button).setVisibility(View.GONE);
 
-        mResultsAdapter = new ResultsAdapter(myContext);
         ideaDriveFolderExists();
         System.out.println("test");
     }
@@ -300,64 +301,39 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     protected void onStop() {
         super.onStop();
-        mResultsAdapter.clear();
 
         if (mGoogleApiClient != null) {
             mGoogleApiClient.disconnect();
         }
     }
 
-    private class RetrieveFeedTask extends AsyncTask<String, Void, Void> {
-
-        ResultCallback<DriveFolder.DriveFolderResult> folderCreatedCallback = new ResultCallback<DriveFolder.DriveFolderResult>() {
-            @Override
-            public void onResult(DriveFolder.DriveFolderResult driveFolderResult) {
-                if (!driveFolderResult.getStatus().isSuccess()) {
-                    System.out.println("Error while trying to create the folder");
-                    return;
-                }
-                System.out.println("Created a folder: " + driveFolderResult.getDriveFolder().getDriveId());
-            }
-        };
-
-
-        @Override
-        protected Void doInBackground(String... urls) {
-            createIdeasFolder();
-
-            return null;
-        }
-
-        private void createIdeasFolder() {
-            MetadataChangeSet changeSet = new MetadataChangeSet.Builder()
-                    .setTitle("IdeaTrackr").build();
-
-            Drive.DriveApi.getRootFolder(mGoogleApiClient).createFolder(
-                    mGoogleApiClient, changeSet).setResultCallback(folderCreatedCallback);
-        }
-    }
-
     public boolean ideaDriveFolderExists() {
         Query query = new Query.Builder()
-                .addFilter(Filters.contains(SearchableField.TITLE, "IdeaTrackr"))
+                .addFilter(Filters.contains(SearchableField.TITLE, "a"))
                 .build();
         Drive.DriveApi.query(mGoogleApiClient, query)
                 .setResultCallback(metadataCallback);
         return false;
     }
 
-    private ResultsAdapter mResultsAdapter;
-
     final private ResultCallback<DriveApi.MetadataBufferResult> metadataCallback =
             new ResultCallback<DriveApi.MetadataBufferResult>() {
                 @Override
                 public void onResult(DriveApi.MetadataBufferResult result) {
                     if (!result.getStatus().isSuccess()) {
-                        System.out.println("Problem when retrieving results");
-                        return;
+                        MetadataBuffer mdb = null;
+
+                        try {
+                            mdb = result.getMetadataBuffer();
+                            if (mdb != null) for (Metadata md : mdb) {
+                                if (md == null || !md.isDataValid()) continue;
+                                md.getTitle();
+                                md.getDriveId();
+                                md.getAlternateLink();
+                            }
+                        } finally {if (mdb != null) mdb.close(); }
                     }
-                    mResultsAdapter.clear();
-                    mResultsAdapter.append(result.getMetadataBuffer());
+
                 }
             };
 }
