@@ -11,4 +11,5 @@
     <string name="save_new_idea_bttn">SAVE IDEA</string>
     <string name="delete_idea_bttn">DELETE IDEA</string>
     <string name="sign_out_bttn">Sign Out</string>
+    <string name="back_up_ideas_button">Backup Ideas into Drive</string>
 </resources>

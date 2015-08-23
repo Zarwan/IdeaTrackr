@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
@@ -16,17 +15,8 @@ import android.widget.ListView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.drive.Drive;
-import com.google.android.gms.drive.DriveApi;
-import com.google.android.gms.drive.DriveFolder;
-import com.google.android.gms.drive.Metadata;
-import com.google.android.gms.drive.MetadataBuffer;
-import com.google.android.gms.drive.MetadataChangeSet;
-import com.google.android.gms.drive.query.Filters;
-import com.google.android.gms.drive.query.Query;
-import com.google.android.gms.drive.query.SearchableField;
 import com.google.android.gms.plus.Plus;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -46,23 +36,16 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public static final String SIGNED_IN_KEY = "SignedIn";
     private final String IDEAS_KEY = "Ideas";
     private final String IDEA_DATA_KEY = "IdeaData";
+    private static final int RC_SIGN_IN = 0;
+
     private static List<Button> ideas = new ArrayList<Button>();
     private static List<List<String>> ideaData = new ArrayList<List<String>>(); //each index is made up of a list; first index of inner list is title, second is details
     private static SharedPreferences sharedPref;
-    private Context myContext;
-
-    /* Request code used to invoke sign in user interactions. */
-    private static final int RC_SIGN_IN = 0;
-
-    /* Client used to interact with Google APIs. */
-    private GoogleApiClient mGoogleApiClient;
-
-    /* Is there a ConnectionResult resolution in progress? */
-    private boolean mIsResolving = false;
-
-    /* Should we automatically resolve ConnectionResults when possible? */
-    private boolean mShouldResolve = false;
     private static boolean signedIn = false;
+    private Context myContext;
+    private GoogleApiClient mGoogleApiClient;
+    private boolean mIsResolving = false;
+    private boolean mShouldResolve = false;
 
 
 
@@ -75,32 +58,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         sharedPref = myContext.getSharedPreferences("sharedPref", 0);
 
         //Load from sharedPref if restoring session
-        if (ideas.size() == 0 && sharedPref.contains(IDEAS_KEY)) {
-            for (int i = 0; i < sharedPref.getInt(IDEAS_KEY, 0); i++) {
-                ideas.add(new Button(myContext));
-            }
-            String dataValue = sharedPref.getString(IDEA_DATA_KEY, null);
-            GsonBuilder gsonb = new GsonBuilder();
-            Gson gson = gsonb.create();
-            ideaData = gson.fromJson(dataValue, ArrayList.class);
-        }
+        if (ideas.size() == 0 && sharedPref.contains(IDEAS_KEY)) loadFromSharedPreferences();
+        if (sharedPref.contains(SIGNED_IN_KEY)) signedIn = sharedPref.getBoolean(SIGNED_IN_KEY, false);
 
-        if (sharedPref.contains(SIGNED_IN_KEY)) {
-            signedIn = sharedPref.getBoolean(SIGNED_IN_KEY, false);
-        }
-
-
-        //Update ideas
         updateIdeas(getIntent());
+        updateSharedPreferences();
 
-        //Save update ideas to sharedPref
-        SharedPreferences.Editor editor = sharedPref.edit();
-        Gson gson = new Gson();
-        String json = gson.toJson(ideaData);
-        editor.putString(IDEA_DATA_KEY, json);
-        editor.putInt(IDEAS_KEY, ideas.size());
-        editor.putBoolean(SIGNED_IN_KEY, signedIn);
-        editor.apply();
 
         IdeaAdapter listAdapter = new IdeaAdapter(myContext, R.layout.idea_button, ideas, ideaData);
         ListView ideasListView = (ListView) findViewById(R.id.ideasListView);
@@ -119,13 +82,39 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 .addScope(new Scope(Scopes.PLUS_LOGIN))
                 .build();
 
+        updateButtonVisibility();
+    }
+
+    private void updateButtonVisibility() {
         if (mGoogleApiClient != null && signedIn) {
             findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
+            findViewById(R.id.back_up_ideas_button).setVisibility(View.VISIBLE);
             findViewById(R.id.sign_in_button).setVisibility(View.GONE);
         } else {
             findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
             findViewById(R.id.sign_out_button).setVisibility(View.GONE);
+            findViewById(R.id.back_up_ideas_button).setVisibility(View.GONE);
         }
+    }
+
+    private void updateSharedPreferences() {
+        SharedPreferences.Editor editor = sharedPref.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(ideaData);
+        editor.putString(IDEA_DATA_KEY, json);
+        editor.putInt(IDEAS_KEY, ideas.size());
+        editor.putBoolean(SIGNED_IN_KEY, signedIn);
+        editor.apply();
+    }
+
+    private void loadFromSharedPreferences() {
+        for (int i = 0; i < sharedPref.getInt(IDEAS_KEY, 0); i++) {
+            ideas.add(new Button(myContext));
+        }
+        String dataValue = sharedPref.getString(IDEA_DATA_KEY, null);
+        GsonBuilder gsonb = new GsonBuilder();
+        Gson gson = gsonb.create();
+        ideaData = gson.fromJson(dataValue, ArrayList.class);
     }
 
     public void onSignOutButtonClicked(View v) {
@@ -138,7 +127,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
             findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
             findViewById(R.id.sign_out_button).setVisibility(View.GONE);
+            findViewById(R.id.back_up_ideas_button).setVisibility(View.GONE);
         }
+    }
+
+    public void onBackupIdeasButtonClicked(View v) {
+
     }
 
     private void updateIdeas(Intent intent) {
@@ -217,10 +211,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         // Show the signed-in UI
         findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
+        findViewById(R.id.back_up_ideas_button).setVisibility(View.VISIBLE);
         findViewById(R.id.sign_in_button).setVisibility(View.GONE);
-
-        ideaDriveFolderExists();
-        System.out.println("test");
     }
 
     @Override
@@ -273,8 +265,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         if (v.getId() == R.id.sign_in_button) {
             onSignInClicked();
         }
-
-        // ...
     }
 
     private void onSignInClicked() {
@@ -306,34 +296,4 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             mGoogleApiClient.disconnect();
         }
     }
-
-    public boolean ideaDriveFolderExists() {
-        Query query = new Query.Builder()
-                .addFilter(Filters.contains(SearchableField.TITLE, "a"))
-                .build();
-        Drive.DriveApi.query(mGoogleApiClient, query)
-                .setResultCallback(metadataCallback);
-        return false;
-    }
-
-    final private ResultCallback<DriveApi.MetadataBufferResult> metadataCallback =
-            new ResultCallback<DriveApi.MetadataBufferResult>() {
-                @Override
-                public void onResult(DriveApi.MetadataBufferResult result) {
-                    if (!result.getStatus().isSuccess()) {
-                        MetadataBuffer mdb = null;
-
-                        try {
-                            mdb = result.getMetadataBuffer();
-                            if (mdb != null) for (Metadata md : mdb) {
-                                if (md == null || !md.isDataValid()) continue;
-                                md.getTitle();
-                                md.getDriveId();
-                                md.getAlternateLink();
-                            }
-                        } finally {if (mdb != null) mdb.close(); }
-                    }
-
-                }
-            };
 }
