@@ -12,6 +12,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.Scopes;
@@ -196,9 +197,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 public void onResult(DriveFolder.DriveFileResult result) {
                     if (!result.getStatus().isSuccess()) {
                         Log.w("MyTag", "Error while trying to create the file");
+                        Toast.makeText(myContext, "Unable to create backup", Toast.LENGTH_LONG).show();
                         return;
                     }
                     Log.d("MyTag", "Created a file with content: " + result.getDriveFile().getDriveId());
+                    Toast.makeText(myContext, "Backup created successfully", Toast.LENGTH_LONG).show();
                 }
             };
 
