@@ -10,10 +10,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 
-import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_DETAILS_KEY;
-import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_ID_KEY;
-import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_TITLE_KEY;
+import com.google.gson.Gson;
+
+import static com.zarwanhashem.ideatrackr.MainActivity.CURR_IDEA_KEY;
 import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_EDIT_KEY;
+import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_ID_KEY;
 
 /**
  * Page where users create new ideas
@@ -78,8 +79,9 @@ public class NewIdeaPageActivity extends AppCompatActivity {
 
         //Package information into an intent to go back to the main page
         Intent intent = new Intent(v.getContext(), MainActivity.class);
-        intent.putExtra(IDEA_TITLE_KEY, ideaTitle.getText().toString());
-        intent.putExtra(IDEA_DETAILS_KEY, ideaDetails.getText().toString());
+        Gson gson = new Gson();
+        String newIdea = gson.toJson(new Idea(ideaTitle.getText().toString(), ideaDetails.getText().toString()));
+        intent.putExtra(CURR_IDEA_KEY, newIdea);
         intent.putExtra(IDEA_EDIT_KEY, false);
         intent.putExtra(IDEA_ID_KEY, id);
         startActivity(intent);

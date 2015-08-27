@@ -23,9 +23,7 @@ import com.google.android.gms.drive.Drive;
 import com.google.android.gms.drive.DriveApi;
 import com.google.android.gms.drive.DriveContents;
 import com.google.android.gms.drive.DriveFolder;
-import com.google.android.gms.drive.DriveId;
 import com.google.android.gms.drive.MetadataChangeSet;
-import com.google.android.gms.drive.OpenFileActivityBuilder;
 import com.google.android.gms.plus.Plus;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -48,12 +46,16 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public static final String IDEA_ID_KEY = "ID";
     public static final String IDEA_DELETE_KEY = "Delete";
     public static final String SIGNED_IN_KEY = "SignedIn";
-    private final String IDEAS_KEY = "Ideas";
-    private final String IDEA_DATA_KEY = "IdeaData";
+    public static final String IDEAS_KEY = "Ideas";
+    public static final String IDEA_DATA_KEY = "IdeaData";
+    public static final String RESTORING_SESSION_KEY = "RestoringSession";
+    public static final String CURR_IDEA_KEY = "CurrentIdea";
+    public static final String REFACTORED_IDEAS_KEY = "RefactoredIdeas";
     private static final int RC_SIGN_IN = 0;
 
     private static List<Button> ideas = new ArrayList<Button>();
     private static List<List<String>> ideaData = new ArrayList<List<String>>(); //each index is made up of a list; first index of inner list is title, second is details
+    private static List<Idea> refactoredIdeas = new ArrayList<Idea>();
     private static SharedPreferences sharedPref;
     private static boolean signedIn = false;
     private Context myContext;
@@ -70,16 +72,17 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         myContext = getApplicationContext();
 
         sharedPref = myContext.getSharedPreferences("sharedPref", 0);
+        Intent intent = getIntent();
 
-        //Load from sharedPref if restoring session
-        if (ideas.size() == 0 && sharedPref.contains(IDEAS_KEY)) loadFromSharedPreferences();
+        //Load from sharedPref
+        if (ideas.size() == 0 && sharedPref.contains(IDEAS_KEY) && intent != null && !intent.hasExtra(IDEA_EDIT_KEY)) loadFromSharedPreferences();
         if (sharedPref.contains(SIGNED_IN_KEY)) signedIn = sharedPref.getBoolean(SIGNED_IN_KEY, false);
 
-        updateIdeas(getIntent());
+        updateIdeas(intent);
         updateSharedPreferences();
 
 
-        IdeaAdapter listAdapter = new IdeaAdapter(myContext, R.layout.idea_button, ideas, ideaData);
+        IdeaAdapter listAdapter = new IdeaAdapter(myContext, R.layout.idea_button, ideas, refactoredIdeas);
         ListView ideasListView = (ListView) findViewById(R.id.ideasListView);
         ideasListView.setAdapter(listAdapter);
 
@@ -103,10 +106,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         for (int i = 0; i < sharedPref.getInt(IDEAS_KEY, 0); i++) {
             ideas.add(new Button(myContext));
         }
-        String dataValue = sharedPref.getString(IDEA_DATA_KEY, null);
+        String jsonIdeas = sharedPref.getString(REFACTORED_IDEAS_KEY, null);
         GsonBuilder gsonb = new GsonBuilder();
         Gson gson = gsonb.create();
-        ideaData = gson.fromJson(dataValue, ArrayList.class);
+        refactoredIdeas = gson.fromJson(jsonIdeas, ArrayList.class);
     }
 
     public void onSignOutButtonClicked(View v) {
@@ -168,8 +171,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                             OutputStream outputStream = driveContents.getOutputStream();
                             Writer writer = new OutputStreamWriter(outputStream);
                             try {
-                                for (List<String> idea : ideaData) {
-                                    writer.write(idea.get(0) + ": " + idea.get(1) + "\n");
+                                if (refactoredIdeas.isEmpty()) {
+                                    writer.write("You have no ideas!");
+
+                                } else {
+                                    for (Idea idea : refactoredIdeas) {
+                                        writer.write(idea.getTitle() + ": " + idea.getDetails() + "\n");
+                                    }
                                 }
                                 writer.close();
                             } catch (IOException e) {
@@ -220,21 +228,22 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
                 //Delete an idea
                 if (intent.getBooleanExtra(IDEA_DELETE_KEY, false)) {
-                    ideaData.remove(id);
+                    refactoredIdeas.remove(id);
                     ideas.remove(id);
 
                 //Edit data of an existing idea
                 } else {
-                    ideaData.get(id).set(0, intent.getStringExtra(IDEA_TITLE_KEY));
-                    ideaData.get(id).set(1, intent.getStringExtra(IDEA_DETAILS_KEY));
+                    Gson gson = new Gson();
+                    Idea currIdea = gson.fromJson(intent.getStringExtra(CURR_IDEA_KEY), Idea.class);
+                    refactoredIdeas.get(id).setTitle(currIdea.getTitle());
+                    refactoredIdeas.get(id).setDetails(currIdea.getDetails());
                 }
 
             //Add a new idea
             } else {
-                List<String> data = new ArrayList<String>();
-                data.add(intent.getStringExtra(IDEA_TITLE_KEY));
-                data.add(intent.getStringExtra(IDEA_DETAILS_KEY));
-                ideaData.add(data);
+                Gson gson = new Gson();
+                Idea currIdea = gson.fromJson(intent.getStringExtra(CURR_IDEA_KEY), Idea.class);
+                refactoredIdeas.add(currIdea);
                 ideas.add(new Button(myContext));
             }
         }
@@ -261,8 +270,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private void updateSharedPreferences() {
         SharedPreferences.Editor editor = sharedPref.edit();
         Gson gson = new Gson();
-        String json = gson.toJson(ideaData);
-        editor.putString(IDEA_DATA_KEY, json);
+        String json = gson.toJson(refactoredIdeas);
+        editor.putString(REFACTORED_IDEAS_KEY, json);
         editor.putInt(IDEAS_KEY, ideas.size());
         editor.putBoolean(SIGNED_IN_KEY, signedIn);
         editor.apply();

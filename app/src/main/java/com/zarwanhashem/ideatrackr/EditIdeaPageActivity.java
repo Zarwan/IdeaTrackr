@@ -10,17 +10,20 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 
-import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_DETAILS_KEY;
-import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_ID_KEY;
-import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_TITLE_KEY;
-import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_EDIT_KEY;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import static com.zarwanhashem.ideatrackr.MainActivity.CURR_IDEA_KEY;
 import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_DELETE_KEY;
+import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_EDIT_KEY;
+import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_ID_KEY;
 
 /**
  * Page where users edit existing ideas
  */
 public class EditIdeaPageActivity extends AppCompatActivity {
     private int id;
+    private Idea idea;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,9 +35,13 @@ public class EditIdeaPageActivity extends AppCompatActivity {
         EditText ideaDetails = (EditText)findViewById(R.id.ideaDetails);
 
         if (intent != null) {
-            setTitle(intent.getStringExtra(IDEA_TITLE_KEY));
-            ideaTitle.setText(intent.getStringExtra(IDEA_TITLE_KEY));
-            ideaDetails.setText(intent.getStringExtra(IDEA_DETAILS_KEY));
+            GsonBuilder gsonBuilder = new GsonBuilder();
+            Gson gson = gsonBuilder.create();
+            idea = gson.fromJson(intent.getStringExtra(CURR_IDEA_KEY), Idea.class);
+
+            setTitle(idea.getTitle());
+            ideaTitle.setText(idea.getTitle());
+            ideaDetails.setText(idea.getDetails());
             id = intent.getIntExtra(IDEA_ID_KEY, -1);
 
         } else {
@@ -71,10 +78,13 @@ public class EditIdeaPageActivity extends AppCompatActivity {
     public void onSaveIdeaButtonClick(View v) {
         EditText ideaTitle = (EditText)findViewById(R.id.ideaTitle);
         EditText ideaDetails = (EditText)findViewById(R.id.ideaDetails);
+        idea.setTitle(ideaTitle.getText().toString());
+        idea.setDetails(ideaDetails.getText().toString());
 
         Intent intent = new Intent(v.getContext(), MainActivity.class);
-        intent.putExtra(IDEA_TITLE_KEY, ideaTitle.getText().toString());
-        intent.putExtra(IDEA_DETAILS_KEY, ideaDetails.getText().toString());
+        Gson gson = new Gson();
+        String jsonIdea = gson.toJson(idea);
+        intent.putExtra(CURR_IDEA_KEY, jsonIdea);
         intent.putExtra(IDEA_EDIT_KEY, true);
         intent.putExtra(IDEA_ID_KEY, id);
         intent.putExtra(IDEA_DELETE_KEY, false);
