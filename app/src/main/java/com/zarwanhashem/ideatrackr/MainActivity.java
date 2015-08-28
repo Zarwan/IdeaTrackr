@@ -38,9 +38,11 @@ import java.util.Calendar;
 import java.util.List;
 
 /**
- * Main page; contains list of existing ideas
+ * Main page; contains the list of existing ideas, and Google related tasks
  */
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
+
+    //Shared preferences keys (consistent throughout all classes)
     public static final String IDEA_EDIT_KEY = "Edit";
     public static final String IDEA_ID_KEY = "ID";
     public static final String IDEA_DELETE_KEY = "Delete";
@@ -51,8 +53,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     private static final int RC_SIGN_IN = 0;
 
-    private static List<Button> ideaButtons = new ArrayList<Button>();
-    private static List<Idea> ideas = new ArrayList<Idea>();
+    private static List<Button> ideaButtons = new ArrayList<Button>(); //The buttons used to access ideas
+    private static List<Idea> ideas = new ArrayList<Idea>(); //Stores created ideas
     private static SharedPreferences sharedPref;
     private static boolean signedIn = false;
     private Context myContext;
@@ -70,20 +72,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         sharedPref = myContext.getSharedPreferences("sharedPref", 0);
 
-        //Load from sharedPref
-        if (ideaButtons.size() == 0 && sharedPref.contains(IDEAS_KEY)) loadFromSharedPreferences();
+        //Load data from sharedPreferences
+        if (ideaButtons.size() == 0 && sharedPref.contains(IDEAS_KEY)) loadIdeasFromSharedPreferences();
         if (sharedPref.contains(SIGNED_IN_KEY)) signedIn = sharedPref.getBoolean(SIGNED_IN_KEY, false);
 
         updateIdeas(getIntent());
-        updateSharedPreferences();
+        updateSharedPreferences(); //save the updated ideas into sharedPreferences
 
-
+        //Output the list of ideas on the main page
         IdeaAdapter listAdapter = new IdeaAdapter(myContext, R.layout.idea_button, ideaButtons, ideas);
         ListView ideasListView = (ListView) findViewById(R.id.ideasListView);
         ideasListView.setAdapter(listAdapter);
 
-        View signInBttnView = findViewById(R.id.sign_in_button);
-        signInBttnView.setOnClickListener(this);
+        findViewById(R.id.sign_in_button).setOnClickListener(this);
 
         // Build GoogleApiClient with access to basic profile
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -95,14 +96,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 .addScope(new Scope(Scopes.PLUS_LOGIN))
                 .build();
 
-        updateButtonVisibility();
+        updateGoogleButtonVisibility();
     }
 
     public GoogleApiClient getmGoogleApiClient() {
         return mGoogleApiClient;
     }
 
-    private void loadFromSharedPreferences() {
+    private void loadIdeasFromSharedPreferences() {
         for (int i = 0; i < sharedPref.getInt(NUM_IDEAS_KEY, 0); i++) {
             ideaButtons.add(new Button(myContext));
         }
@@ -111,6 +112,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Type typeOfListOfIdea = new TypeToken<ArrayList<Idea>>(){}.getType();
         ideas = new Gson().fromJson(jsonIdeas, typeOfListOfIdea);
 
+        //If no ideas are found TypeToken gives us a null array instead of an empty one
         if (ideas == null) {
             ideas = new ArrayList<Idea>();
         }
@@ -122,8 +124,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             getmGoogleApiClient().disconnect();
 
             signedIn = false;
-            updateSignedIn();
-            updateButtonVisibility();
+            saveSignedIn();
+            updateGoogleButtonVisibility();
         }
     }
 
@@ -135,7 +137,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     private void onSignInClicked() {
-
         if (getmGoogleApiClient() == null) {
             return;
         }
@@ -143,8 +144,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         // attempt to resolve any errors that occur.
         mShouldResolve = true;
         getmGoogleApiClient().connect();
-
-        // Show a message to the user that we are signing in.
     }
 
     public void onBackupIdeasButtonClicked(View v) {
@@ -167,10 +166,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     new Thread() {
                         @Override
                         public void run() {
+
                             // write content to DriveContents
                             OutputStream outputStream = driveContents.getOutputStream();
                             Writer writer = new OutputStreamWriter(outputStream);
+
                             try {
+                                //Set the file contents
+
                                 if (ideas.isEmpty()) {
                                     writer.write("You have no ideas!");
 
@@ -183,6 +186,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                             } catch (IOException e) {
                                 Log.e("DriveError", e.getMessage());
                             }
+
+                            //Set the file properties (title, file type)
 
                             Calendar date = Calendar.getInstance();
                             MetadataChangeSet changeSet = new MetadataChangeSet.Builder()
@@ -212,12 +217,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             };
 
     public void onNewIdeaButtonClicked(View v) {
-        updateSignedIn();
-
+        saveSignedIn();
         Intent intent = new Intent(v.getContext(), NewIdeaPageActivity.class);
         startActivity(intent);
     }
 
+    /**
+     * Updates the stored ideas with changes made in other activities (new/edited ideas)
+     * @param intent - The intent passed to MainActivity (call getIntent() in onCreate)
+     */
     private void updateIdeas(Intent intent) {
         if (intent != null && intent.hasExtra(IDEA_EDIT_KEY)) {
 
@@ -245,13 +253,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
     }
 
-    public void updateSignedIn() {
+    /**
+     * Updates the signed in variable in sharedPreferences
+     */
+    public void saveSignedIn() {
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putBoolean(SIGNED_IN_KEY, signedIn);
         editor.apply();
     }
 
-    private void updateButtonVisibility() {
+    /**
+     * Updates the Google related buttons depending on whether the user is signed in or not
+     * Google related buttons are: sign-in, sign-out, and backup ideas into Drive
+     */
+    private void updateGoogleButtonVisibility() {
         if (getmGoogleApiClient() != null && signedIn) {
             findViewById(R.id.sign_in_button).setVisibility(View.GONE);
             findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
@@ -264,6 +279,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
     }
 
+    /**
+     * Saves the current ideas and signed in status into sharedPreferences
+     */
     private void updateSharedPreferences() {
         SharedPreferences.Editor editor = sharedPref.edit();
         String json = new Gson().toJson(ideas);
@@ -304,8 +322,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         // establish a service connection to Google Play services.
         mShouldResolve = false;
         signedIn = true;
-        updateSignedIn();
-        updateButtonVisibility();
+        saveSignedIn();
+        updateGoogleButtonVisibility();
         Toast.makeText(myContext, "Google account login successful", Toast.LENGTH_LONG).show();
     }
 
