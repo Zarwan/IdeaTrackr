@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public static final String SIGNED_IN_KEY = "SignedIn";
     public static final String NUM_IDEAS_KEY = "NumberOfIdeas";
     public static final String CURR_IDEA_KEY = "CurrentIdea";
-    public static final String REFACTORED_IDEAS_KEY = "Ideas";
+    public static final String IDEAS_KEY = "Ideas";
     private static final int RC_SIGN_IN = 0;
 
     private static List<Button> ideaButtons = new ArrayList<Button>();
@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         for (int i = 0; i < sharedPref.getInt(NUM_IDEAS_KEY, 0); i++) {
             ideaButtons.add(new Button(myContext));
         }
-        String jsonIdeas = sharedPref.getString(REFACTORED_IDEAS_KEY, null);
+        String jsonIdeas = sharedPref.getString(IDEAS_KEY, null);
         Gson gson = new Gson();
         ideas = gson.fromJson(jsonIdeas, ArrayList.class);
     }
@@ -264,7 +264,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         SharedPreferences.Editor editor = sharedPref.edit();
         Gson gson = new Gson();
         String json = gson.toJson(ideas);
-        editor.putString(REFACTORED_IDEAS_KEY, json);
+        editor.putString(IDEAS_KEY, json);
         editor.putInt(NUM_IDEAS_KEY, ideaButtons.size());
         editor.putBoolean(SIGNED_IN_KEY, signedIn);
         editor.apply();
