@@ -98,6 +98,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         updateButtonVisibility();
     }
 
+    public GoogleApiClient getmGoogleApiClient() {
+        return mGoogleApiClient;
+    }
+
     private void loadFromSharedPreferences() {
         for (int i = 0; i < sharedPref.getInt(NUM_IDEAS_KEY, 0); i++) {
             ideaButtons.add(new Button(myContext));
@@ -113,9 +117,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     public void onSignOutButtonClicked(View v) {
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            Plus.AccountApi.clearDefaultAccount(mGoogleApiClient);
-            mGoogleApiClient.disconnect();
+        if (getmGoogleApiClient() != null && getmGoogleApiClient().isConnected()) {
+            Plus.AccountApi.clearDefaultAccount(getmGoogleApiClient());
+            getmGoogleApiClient().disconnect();
 
             signedIn = false;
             updateSignedIn();
@@ -132,20 +136,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     private void onSignInClicked() {
 
-        if (mGoogleApiClient == null) {
+        if (getmGoogleApiClient() == null) {
             return;
         }
         // User clicked the sign-in button, so begin the sign-in process and automatically
         // attempt to resolve any errors that occur.
         mShouldResolve = true;
-        mGoogleApiClient.connect();
+        getmGoogleApiClient().connect();
 
         // Show a message to the user that we are signing in.
     }
 
     public void onBackupIdeasButtonClicked(View v) {
-        if (mGoogleApiClient.isConnected()) {
-            Drive.DriveApi.newDriveContents(mGoogleApiClient)
+        if (getmGoogleApiClient().isConnected()) {
+            Drive.DriveApi.newDriveContents(getmGoogleApiClient())
                     .setResultCallback(driveContentsCallback);
         }
     }
@@ -187,8 +191,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                                     .setStarred(true).build();
 
                             // create a file on root folder
-                            Drive.DriveApi.getRootFolder(mGoogleApiClient)
-                                    .createFile(mGoogleApiClient, changeSet, driveContents)
+                            Drive.DriveApi.getRootFolder(getmGoogleApiClient())
+                                    .createFile(getmGoogleApiClient(), changeSet, driveContents)
                                     .setResultCallback(fileCallback);
                         }
                     }.start();
@@ -248,7 +252,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     private void updateButtonVisibility() {
-        if (mGoogleApiClient != null && signedIn) {
+        if (getmGoogleApiClient() != null && signedIn) {
             findViewById(R.id.sign_in_button).setVisibility(View.GONE);
             findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
             findViewById(R.id.back_up_ideas_button).setVisibility(View.VISIBLE);
@@ -320,7 +324,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     mIsResolving = true;
                 } catch (IntentSender.SendIntentException e) {
                     mIsResolving = false;
-                    mGoogleApiClient.connect();
+                    getmGoogleApiClient().connect();
                 }
             } else {
                 // Could not resolve the connection result, show the user an
@@ -343,19 +347,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             }
 
             mIsResolving = false;
-            mGoogleApiClient.connect();
+            getmGoogleApiClient().connect();
         }
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        if (mGoogleApiClient != null) mGoogleApiClient.connect();
+        if (getmGoogleApiClient() != null) getmGoogleApiClient().connect();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        if (mGoogleApiClient != null) mGoogleApiClient.disconnect();
+        if (getmGoogleApiClient() != null) getmGoogleApiClient().disconnect();
     }
 }
