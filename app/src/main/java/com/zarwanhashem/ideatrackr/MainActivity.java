@@ -26,11 +26,13 @@ import com.google.android.gms.drive.DriveFolder;
 import com.google.android.gms.drive.MetadataChangeSet;
 import com.google.android.gms.plus.Plus;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -66,13 +68,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         myContext = getApplicationContext();
 
         sharedPref = myContext.getSharedPreferences("sharedPref", 0);
-        Intent intent = getIntent();
 
         //Load from sharedPref
-        if (ideaButtons.size() == 0 && (intent == null || !intent.hasExtra(IDEA_EDIT_KEY))) loadFromSharedPreferences();
+        if (ideaButtons.size() == 0 && sharedPref.contains(IDEAS_KEY)) loadFromSharedPreferences();
         if (sharedPref.contains(SIGNED_IN_KEY)) signedIn = sharedPref.getBoolean(SIGNED_IN_KEY, false);
 
-        updateIdeas(intent);
+        updateIdeas(getIntent());
         updateSharedPreferences();
 
 
@@ -102,7 +103,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
         String jsonIdeas = sharedPref.getString(IDEAS_KEY, null);
         Gson gson = new Gson();
-        ideas = gson.fromJson(jsonIdeas, ArrayList.class);
+        Type typeOfListOfIdea = new TypeToken<ArrayList<Idea>>(){}.getType();
+        ideas = gson.fromJson(jsonIdeas, typeOfListOfIdea);
+
+        if (ideas == null) {
+            ideas = new ArrayList<Idea>();
+        }
     }
 
     public void onSignOutButtonClicked(View v) {
