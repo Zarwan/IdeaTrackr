@@ -28,6 +28,7 @@ public class NewIdeaPageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_idea_page);
         Context myContext = getApplicationContext();
+
         EditText ideaTitle = (EditText)findViewById(R.id.ideaTitle);
         EditText ideaDetails = (EditText)findViewById(R.id.ideaDetails);
         sharedPref = myContext.getSharedPreferences("sharedPref", 0);

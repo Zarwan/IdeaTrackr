@@ -36,8 +36,7 @@ public class IdeaAdapter extends ArrayAdapter<Button> {
             //onClick of ideas takes them to the edit idea page
             public void onClick(View v) {
                 Intent intent = new Intent(v.getContext(), EditIdeaPageActivity.class);
-                Gson gson = new Gson();
-                String jsonIdea = gson.toJson(ideas.get(POSITION));
+                String jsonIdea = new Gson().toJson(ideas.get(POSITION));
                 intent.putExtra(CURR_IDEA_KEY, jsonIdea);
                 intent.putExtra(IDEA_ID_KEY, POSITION);
                 PARENT.getContext().startActivity(intent);

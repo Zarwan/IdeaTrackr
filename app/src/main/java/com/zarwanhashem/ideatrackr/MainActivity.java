@@ -44,10 +44,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public static final String IDEA_EDIT_KEY = "Edit";
     public static final String IDEA_ID_KEY = "ID";
     public static final String IDEA_DELETE_KEY = "Delete";
-    public static final String SIGNED_IN_KEY = "SignedIn";
-    public static final String NUM_IDEAS_KEY = "NumberOfIdeas";
     public static final String CURR_IDEA_KEY = "CurrentIdea";
-    public static final String IDEAS_KEY = "Ideas";
+    private final String SIGNED_IN_KEY = "SignedIn";
+    private final String NUM_IDEAS_KEY = "NumberOfIdeas";
+    private final String IDEAS_KEY = "Ideas";
+
     private static final int RC_SIGN_IN = 0;
 
     private static List<Button> ideaButtons = new ArrayList<Button>();
@@ -101,10 +102,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         for (int i = 0; i < sharedPref.getInt(NUM_IDEAS_KEY, 0); i++) {
             ideaButtons.add(new Button(myContext));
         }
+
         String jsonIdeas = sharedPref.getString(IDEAS_KEY, null);
-        Gson gson = new Gson();
         Type typeOfListOfIdea = new TypeToken<ArrayList<Idea>>(){}.getType();
-        ideas = gson.fromJson(jsonIdeas, typeOfListOfIdea);
+        ideas = new Gson().fromJson(jsonIdeas, typeOfListOfIdea);
 
         if (ideas == null) {
             ideas = new ArrayList<Idea>();
@@ -118,10 +119,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
             signedIn = false;
             updateSignedIn();
-
-            findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
-            findViewById(R.id.sign_out_button).setVisibility(View.GONE);
-            findViewById(R.id.back_up_ideas_button).setVisibility(View.GONE);
+            updateButtonVisibility();
         }
     }
 
@@ -157,7 +155,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 @Override
                 public void onResult(DriveApi.DriveContentsResult result) {
                     if (!result.getStatus().isSuccess()) {
-                        Log.w("MyTag", "Error while trying to create new file contents");
                         return;
                     }
                     final DriveContents driveContents = result.getDriveContents();
@@ -180,7 +177,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                                 }
                                 writer.close();
                             } catch (IOException e) {
-                                Log.e("MyTag", e.getMessage());
+                                Log.e("DriveError", e.getMessage());
                             }
 
                             Calendar date = Calendar.getInstance();
@@ -203,11 +200,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 @Override
                 public void onResult(DriveFolder.DriveFileResult result) {
                     if (!result.getStatus().isSuccess()) {
-                        Log.w("MyTag", "Error while trying to create the file");
                         Toast.makeText(myContext, "Unable to create backup", Toast.LENGTH_LONG).show();
                         return;
                     }
-                    Log.d("MyTag", "Created a file with content: " + result.getDriveFile().getDriveId());
                     Toast.makeText(myContext, "Backup created successfully", Toast.LENGTH_LONG).show();
                 }
             };
@@ -232,16 +227,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
                 //Edit data of an existing idea
                 } else {
-                    Gson gson = new Gson();
-                    Idea currIdea = gson.fromJson(intent.getStringExtra(CURR_IDEA_KEY), Idea.class);
+                    Idea currIdea = new Gson().fromJson(intent.getStringExtra(CURR_IDEA_KEY), Idea.class);
                     ideas.get(id).setTitle(currIdea.getTitle());
                     ideas.get(id).setDetails(currIdea.getDetails());
                 }
 
             //Add a new idea
             } else {
-                Gson gson = new Gson();
-                Idea currIdea = gson.fromJson(intent.getStringExtra(CURR_IDEA_KEY), Idea.class);
+                Idea currIdea = new Gson().fromJson(intent.getStringExtra(CURR_IDEA_KEY), Idea.class);
                 ideas.add(currIdea);
                 ideaButtons.add(new Button(myContext));
             }
@@ -256,9 +249,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     private void updateButtonVisibility() {
         if (mGoogleApiClient != null && signedIn) {
+            findViewById(R.id.sign_in_button).setVisibility(View.GONE);
             findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
             findViewById(R.id.back_up_ideas_button).setVisibility(View.VISIBLE);
-            findViewById(R.id.sign_in_button).setVisibility(View.GONE);
+
         } else {
             findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
             findViewById(R.id.sign_out_button).setVisibility(View.GONE);
@@ -268,8 +262,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     private void updateSharedPreferences() {
         SharedPreferences.Editor editor = sharedPref.edit();
-        Gson gson = new Gson();
-        String json = gson.toJson(ideas);
+        String json = new Gson().toJson(ideas);
         editor.putString(IDEAS_KEY, json);
         editor.putInt(NUM_IDEAS_KEY, ideaButtons.size());
         editor.putBoolean(SIGNED_IN_KEY, signedIn);
@@ -308,17 +301,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         mShouldResolve = false;
         signedIn = true;
         updateSignedIn();
-
-        // Show the signed-in UI
-        findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
-        findViewById(R.id.back_up_ideas_button).setVisibility(View.VISIBLE);
-        findViewById(R.id.sign_in_button).setVisibility(View.GONE);
+        updateButtonVisibility();
     }
 
     @Override
-    public void onConnectionSuspended(int i) {
-
-    }
+    public void onConnectionSuspended(int i) {}
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
@@ -363,17 +350,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     protected void onStart() {
         super.onStart();
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.connect();
-        }
+        if (mGoogleApiClient != null) mGoogleApiClient.connect();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.disconnect();
-        }
+        if (mGoogleApiClient != null) mGoogleApiClient.disconnect();
     }
 }

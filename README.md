@@ -7,7 +7,7 @@ of the backup in the name.
 The UI is pretty basic right now.
 
 Potential Enhancements:
-- Improve Drive integration (Will probably have to migrate to the Drive REST API; currently using the Drive API for Android)
+- Improve Drive integration (Will probably have to migrate to the Drive REST API; currently using the Drive API for Android, which is very limited)
     - Share ideas with a friend on Drive
     - Update a single Drive file instead of making a new one for each backup, while renaming it with the most recent timestamp
     - Provide a sync option where the ideas in the app are updated based on a file in Drive

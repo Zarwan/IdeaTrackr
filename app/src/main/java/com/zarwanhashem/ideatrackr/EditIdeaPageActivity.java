@@ -35,10 +35,7 @@ public class EditIdeaPageActivity extends AppCompatActivity {
         EditText ideaDetails = (EditText)findViewById(R.id.ideaDetails);
 
         if (intent != null) {
-            GsonBuilder gsonBuilder = new GsonBuilder();
-            Gson gson = gsonBuilder.create();
-            idea = gson.fromJson(intent.getStringExtra(CURR_IDEA_KEY), Idea.class);
-
+            idea = getIdea(intent);
             setTitle(idea.getTitle());
             ideaTitle.setText(idea.getTitle());
             ideaDetails.setText(idea.getDetails());
@@ -50,6 +47,11 @@ public class EditIdeaPageActivity extends AppCompatActivity {
             ideaDetails.setText("ERROR: Details not found");
             id = -1;
         }
+    }
+
+    private Idea getIdea(Intent intent) {
+        Gson gson = new GsonBuilder().create();
+        return gson.fromJson(intent.getStringExtra(CURR_IDEA_KEY), Idea.class);
     }
 
     @Override
@@ -82,8 +84,7 @@ public class EditIdeaPageActivity extends AppCompatActivity {
         idea.setDetails(ideaDetails.getText().toString());
 
         Intent intent = new Intent(v.getContext(), MainActivity.class);
-        Gson gson = new Gson();
-        String jsonIdea = gson.toJson(idea);
+        String jsonIdea = new Gson().toJson(idea);
         intent.putExtra(CURR_IDEA_KEY, jsonIdea);
         intent.putExtra(IDEA_EDIT_KEY, true);
         intent.putExtra(IDEA_ID_KEY, id);
@@ -106,8 +107,8 @@ public class EditIdeaPageActivity extends AppCompatActivity {
 
                         intent.putExtra(IDEA_EDIT_KEY, true);
                         intent.putExtra(IDEA_ID_KEY, id);
-                        id--;
                         intent.putExtra(IDEA_DELETE_KEY, true);
+                        id--;
                         startActivity(intent);
                     }
                 })
