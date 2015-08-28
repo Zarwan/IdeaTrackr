@@ -42,10 +42,9 @@ public class EditIdeaPageActivity extends AppCompatActivity {
             id = intent.getIntExtra(IDEA_ID_KEY, -1);
 
         } else {
-            setTitle("ERROR: Title not found");
-            ideaTitle.setText("ERROR: Title not found");
-            ideaDetails.setText("ERROR: Details not found");
-            id = -1;
+            throw new RuntimeException(
+                    "Recieved a null intent when navigating to the edit idea page");
+            //this should never happen
         }
     }
 
