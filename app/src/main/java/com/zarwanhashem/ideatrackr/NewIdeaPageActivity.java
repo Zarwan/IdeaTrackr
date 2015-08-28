@@ -80,8 +80,9 @@ public class NewIdeaPageActivity extends AppCompatActivity {
         //Package information into an intent to go back to the main page
         Intent intent = new Intent(v.getContext(), MainActivity.class);
         Gson gson = new Gson();
-        String newIdea = gson.toJson(new Idea(ideaTitle.getText().toString(), ideaDetails.getText().toString()));
-        intent.putExtra(CURR_IDEA_KEY, newIdea);
+        Idea newIdea = new Idea(ideaTitle.getText().toString(), ideaDetails.getText().toString());
+        String newIdeaJson = gson.toJson(newIdea);
+        intent.putExtra(CURR_IDEA_KEY, newIdeaJson);
         intent.putExtra(IDEA_EDIT_KEY, false);
         intent.putExtra(IDEA_ID_KEY, id);
         startActivity(intent);

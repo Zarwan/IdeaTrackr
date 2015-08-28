@@ -18,18 +18,18 @@ import static com.zarwanhashem.ideatrackr.MainActivity.IDEA_ID_KEY;
  * Used to provide the ListView of ideas on the MainActivity
  */
 public class IdeaAdapter extends ArrayAdapter<Button> {
-    private static List<Idea> refactoredIdeas;
+    private static List<Idea> ideas;
 
-    public IdeaAdapter(Context context, int resource, List<Button> ideas, List<Idea> refactoredIdeas) {
-        super(context, resource, ideas);
-        IdeaAdapter.refactoredIdeas = refactoredIdeas;
+    public IdeaAdapter(Context context, int resource, List<Button> ideaButtons, List<Idea> ideas) {
+        super(context, resource, ideaButtons);
+        IdeaAdapter.ideas = ideas;
     }
 
     @Override
     public View getView(final int POSITION, View convertView, final ViewGroup PARENT) {
         View view = super.getView(POSITION, convertView, PARENT);
         Button idea = (Button) view.findViewById(R.id.idea_button);
-        idea.setText(refactoredIdeas.get(POSITION).getTitle());
+        idea.setText(ideas.get(POSITION).getTitle());
 
         idea.setOnClickListener(new View.OnClickListener() {
 
@@ -37,7 +37,7 @@ public class IdeaAdapter extends ArrayAdapter<Button> {
             public void onClick(View v) {
                 Intent intent = new Intent(v.getContext(), EditIdeaPageActivity.class);
                 Gson gson = new Gson();
-                String jsonIdea = gson.toJson(refactoredIdeas.get(POSITION));
+                String jsonIdea = gson.toJson(ideas.get(POSITION));
                 intent.putExtra(CURR_IDEA_KEY, jsonIdea);
                 intent.putExtra(IDEA_ID_KEY, POSITION);
                 PARENT.getContext().startActivity(intent);
