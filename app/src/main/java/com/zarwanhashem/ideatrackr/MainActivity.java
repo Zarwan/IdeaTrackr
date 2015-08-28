@@ -306,6 +306,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         signedIn = true;
         updateSignedIn();
         updateButtonVisibility();
+        Toast.makeText(myContext, "Google account login successful", Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -327,11 +328,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     getmGoogleApiClient().connect();
                 }
             } else {
-                // Could not resolve the connection result, show the user an
-                // error dialog.
+                Toast.makeText(myContext, "Google login failed", Toast.LENGTH_LONG).show();
             }
-        } else {
-            // Show the signed-out UI
         }
     }
 
@@ -341,7 +339,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == RC_SIGN_IN) {
-            // If the error resolution was not successful we should not resolve further.
+
             if (resultCode != RESULT_OK) {
                 mShouldResolve = false;
             }
