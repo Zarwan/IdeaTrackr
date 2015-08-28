@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Intent intent = getIntent();
 
         //Load from sharedPref
-        if (ideas.size() == 0 && sharedPref.contains(IDEAS_KEY) && intent != null && !intent.hasExtra(IDEA_EDIT_KEY)) loadFromSharedPreferences();
+        if (ideas.size() == 0 && (intent == null || !intent.hasExtra(IDEA_EDIT_KEY))) loadFromSharedPreferences();
         if (sharedPref.contains(SIGNED_IN_KEY)) signedIn = sharedPref.getBoolean(SIGNED_IN_KEY, false);
 
         updateIdeas(intent);
